@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdlib>
@@ -78,20 +78,23 @@ string decryptShift(const string& encryptedText, int shift)
 
     return decryptedText;
 }
-
 // Функция для добавления новых данных в файл
 void addData()
 {
     string login;
+    string password;
     string serviceName;
 
+    cin.ignore(); // Очистка буфера ввода
+
     cout << "Введите логин: ";
-    cin >> login;
+    getline(cin, login);
+
+    cout << "Введите пароль: ";
+    getline(cin, password);
 
     cout << "Введите название сервиса: ";
-    cin >> serviceName;
-
-    string password = generatePassword(10);
+    getline(cin, serviceName);
 
     ofstream file(FILE_NAME, ios::app);
 
@@ -115,7 +118,6 @@ void addData()
     }
 }
 
-// Функция для просмотра данных из файла
 void viewData()
 {
     ifstream file(FILE_NAME);
@@ -146,14 +148,50 @@ void viewData()
         }
 
         file.close();
+
+        int selectedLine;
+
+        cout << "Введите номер сервиса, чтобы просмотреть логин и пароль: ";
+        cin >> selectedLine;
+
+        lineNumber = 1;
+        file.open(FILE_NAME); // Переоткрываем файл для поиска выбранной строки
+
+        if (file.is_open())
+        {
+            while (getline(file, line))
+            {
+                if (lineNumber == selectedLine)
+                {
+                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+
+                    cout << "Логин: " << decryptedLogin << endl;
+                    cout << "Пароль: " << decryptedPassword << endl;
+
+                    break;
+                }
+
+                lineNumber++;
+            }
+
+            file.close();
+        }
+        else
+        {
+            cout << "Ошибка при открытии файла." << endl;
+        }
     }
     else
     {
         cout << "Ошибка при открытии файла." << endl;
     }
 }
-
-// Функция для редактирования данных в файле
 void editData()
 {
     ifstream file(FILE_NAME);
@@ -166,6 +204,7 @@ void editData()
         string line;
         int lineNumber = 1;
         int selectedLine;
+        bool lineEdited = false; // Флаг для отслеживания редактирования строки
 
         cout << "Доступные сервисы:" << endl;
 
@@ -197,6 +236,8 @@ void editData()
         {
             if (currentLine == selectedLine)
             {
+                lineEdited = true; // Устанавливаем флаг редактирования строки
+
                 string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
                 size_t commaPos1 = decryptedLine.find(",");
@@ -260,7 +301,16 @@ void editData()
         tempFile.close();
 
         remove(FILE_NAME.c_str());
-        rename("temp.txt", FILE_NAME.c_str());
+
+        // Переименовываем временный файл в оригинальное имя файла, только если строка была отредактирована
+        if (lineEdited)
+        {
+            rename("temp.txt", FILE_NAME.c_str());
+        }
+        else
+        {
+            remove("temp.txt");
+        }
     }
     else
     {
@@ -417,6 +467,7 @@ int main()
         cout << "7. Выход" << endl;
         cout << "Введите номер действия: ";
         cin >> choice;
+
         switch (choice)
         {
         case 1:
