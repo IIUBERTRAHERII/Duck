@@ -1,3 +1,4 @@
+//Добавил вопрос о генерации пароля в add data
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -90,8 +91,14 @@ void addData()
     cout << "Введите логин: ";
     getline(cin, login);
 
-    cout << "Введите пароль: ";
+    cout << "Введите пароль или нажмите Enter для генерации: ";
     getline(cin, password);
+
+    if (password.empty())
+    {
+        password = generatePassword(10); // Генерация пароля длиной 10 символов
+        cout << "Сгенерированный пароль: " << password << endl;
+    }
 
     cout << "Введите название сервиса: ";
     getline(cin, serviceName);
@@ -192,6 +199,7 @@ void viewData()
         cout << "Ошибка при открытии файла." << endl;
     }
 }
+
 void editData()
 {
     ifstream file(FILE_NAME);
@@ -317,6 +325,7 @@ void editData()
         cout << "Ошибка при открытии файла." << endl;
     }
 }
+
 
 // Функция для удаления данных из файла
 void deleteData()
