@@ -1,6 +1,4 @@
-// Добавил вопрос о генерации пароля в add data 
-// Пофикшены слипшийся логинпарольсервис
-// Добавил вопрос о генерации пароля в add data
+// // Добавил вопрос о генерации пароля в add data
 // Фиксить:
 // в выводе вместо пробелов vv
 // при попытке посмтореть данные в  зашифрованом файле пишет ошибка открытия файла
@@ -156,7 +154,7 @@ void viewData()
         int lineNumber = 1;
 
         cout << "Доступные сервисы:" << endl;
-
+        string decryptedServiceName;
         while (getline(file, line))
         {
             string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
@@ -164,11 +162,9 @@ void viewData()
             size_t commaPos1 = decryptedLine.find(",");
             size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-            string decryptedLogin = decryptedLine.substr(0, commaPos1);
-            string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
             string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
 
-            cout << lineNumber << ". " << decryptedLine << endl;
+            cout << lineNumber << ". " << decryptedServiceName << endl;
 
             lineNumber++;
         }
@@ -196,10 +192,10 @@ void viewData()
 
                     string decryptedLogin = decryptedLine.substr(0, commaPos1);
                     string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
-
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
                     cout << "Логин: " << decryptedLogin << endl;
                     cout << "Пароль: " << decryptedPassword << endl;
-                    cout << "Сервис: " << decryptedLine << endl;
+                    cout << "Сервис: " << decryptedServiceName << endl;
 
                     break;
                 }
