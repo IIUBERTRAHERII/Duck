@@ -1,3 +1,5 @@
+// Добавил вопрос о генерации пароля в add data 
+// Пофикшены слипшийся логинпарольсервис
 // Добавил вопрос о генерации пароля в add data
 // Фиксить:
 // в выводе вместо пробелов vv
@@ -57,7 +59,11 @@ string decryptXOR(const string& encryptedText, char key)
 
     for (int i = 0; i < decryptedText.length(); i++)
     {
-        decryptedText[i] = encryptedText[i] ^ key;
+        if (encryptedText[i] != ',')
+        {
+            decryptedText[i] = encryptedText[i] ^ key;
+        }
+
     }
 
     return decryptedText;
@@ -83,7 +89,11 @@ string decryptShift(const string& encryptedText, int shift)
 
     for (int i = 0; i < decryptedText.length(); i++)
     {
-        decryptedText[i] = (encryptedText[i] - shift + 256) % 256;
+        if (encryptedText[i] != ',')
+        {
+            decryptedText[i] = (encryptedText[i] - shift + 256) % 256;
+        }
+
     }
 
     return decryptedText;
@@ -158,7 +168,7 @@ void viewData()
             string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
             string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
 
-            cout << lineNumber << ". " << decryptedServiceName << endl;
+            cout << lineNumber << ". " << decryptedLine << endl;
 
             lineNumber++;
         }
@@ -189,6 +199,7 @@ void viewData()
 
                     cout << "Логин: " << decryptedLogin << endl;
                     cout << "Пароль: " << decryptedPassword << endl;
+                    cout << "Сервис: " << decryptedLine << endl;
 
                     break;
                 }
