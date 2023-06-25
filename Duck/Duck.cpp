@@ -163,7 +163,10 @@ void viewData()
             size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
             string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
-
+            size_t serviceNameEnd = decryptedServiceName.find(",");
+            if (serviceNameEnd != string::npos) {
+                decryptedServiceName = decryptedServiceName.substr(0, serviceNameEnd);
+            }
             cout << lineNumber << ". " << decryptedServiceName << endl;
 
             lineNumber++;
@@ -171,10 +174,16 @@ void viewData()
 
         file.close();
 
+        if (isEmpty)
+        {
+            cout << "Файл пустой." << endl;
+            return; // Возвращаемся из функции, так как нет данных для просмотра
+        }
+
         int selectedLine;
 
         cout << "Введите номер сервиса, чтобы просмотреть логин и пароль: ";
-        cin >> selectedLine;
+        std::cin >> selectedLine;
 
         lineNumber = 1;
         file.open(FILE_NAME); // Переоткрываем файл для поиска выбранной строки
@@ -487,9 +496,7 @@ int main()
         cout << "2. Просмотр данных" << endl;
         cout << "3. Редактирование данных" << endl;
         cout << "4. Удаление данных" << endl;
-        cout << "5. Зашифрование файла" << endl;
-        cout << "6. Дешифрование файла" << endl;
-        cout << "7. Выход" << endl;
+        cout << "5. Выход" << endl;
         cout << "Введите номер действия: ";
         cin >> choice;
 
@@ -508,19 +515,13 @@ int main()
             deleteData();
             break;
         case 5:
-            encryptFile();
-            break;
-        case 6:
-            decryptFile();
-            break;
-        case 7:
             cout << "Завершение работы программы." << endl;
             break;
         default:
             cout << "Неверный выбор. Попробуйте еще раз." << endl;
             break;
         }
-    } while (choice != 7);
+    } while (choice != 5);
 
     return 0;
 }
