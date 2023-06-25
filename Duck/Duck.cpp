@@ -1,13 +1,3 @@
-// // Добавил вопрос о генерации пароля в add data
-// Фиксить:
-// в выводе вместо пробелов vv
-// при попытке посмтореть данные в  зашифрованом файле пишет ошибка открытия файла
-// лепить логинпарольсеквис в кучу
-// при редактировании не удалят старые данные
-//
-//
-//
-//
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -155,8 +145,12 @@ void viewData()
 
         cout << "Доступные сервисы:" << endl;
         string decryptedServiceName;
+        bool isEmpty = true; // Флаг, указывающий на пустой файл
+
         while (getline(file, line))
         {
+            isEmpty = false; // Файл не является пустым
+
             string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
             size_t commaPos1 = decryptedLine.find(",");
@@ -174,10 +168,9 @@ void viewData()
 
         file.close();
 
-        if (isEmpty)
-        {
+        if (isEmpty) {
             cout << "Файл пустой." << endl;
-            return; // Возвращаемся из функции, так как нет данных для просмотра
+            return; // Программа завершает выполнение
         }
 
         int selectedLine;
@@ -229,7 +222,6 @@ void editData()
 {
     ifstream file(FILE_NAME);
     ofstream tempFile("temp.txt");
-
     if (file.is_open() && tempFile.is_open())
     {
         char key = 'k'; // Ключ для XOR-шифрования
@@ -259,6 +251,11 @@ void editData()
 
         file.close();
         file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала
+
+        if (lineNumber == 1) {
+            cout << "Файл пустой. Нет данных для редактирования." << endl;
+            return; // Программа завершает выполнение
+        }
 
         cout << "Введите номер сервиса, который необходимо отредактировать: ";
         cin >> selectedLine;
@@ -357,7 +354,6 @@ void deleteData()
 {
     ifstream file(FILE_NAME);
     ofstream tempFile("temp.txt");
-
     if (file.is_open() && tempFile.is_open())
     {
         char key = 'k'; // Ключ для XOR-шифрования
@@ -386,6 +382,11 @@ void deleteData()
 
         file.close();
         file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала
+
+        if (lineNumber == 1) {
+            cout << "Файл пустой. Нет данных для удаления." << endl;
+            return; // Программа завершает выполнение
+        }
 
         cout << "Введите номер сервиса, который необходимо удалить: ";
         cin >> selectedLine;
