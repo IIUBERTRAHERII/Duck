@@ -1,16 +1,16 @@
-#include <iostream> 
-#include <fstream> 
-#include <string> 
-#include <cstdlib> 
-#include <ctime> 
-#include <iomanip> 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 
 const string FILE_NAME = "passwords.txt";
 const int KEY_SHIFT = 3;
 
-// Функция для генерации случайного пароля 
+// Функция для генерации случайного пароля
 string generatePassword(int length)
 {
     const string CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -26,14 +26,14 @@ string generatePassword(int length)
 
     return password;
 }
-// Функция для шифрования текста методом XOR 
+// Функция для шифрования текста методом XOR
 string encryptXOR(const string& text, char key)
 {
     string encryptedText = text;
 
     for (int i = 0; i < encryptedText.length(); i++)
     {
-        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ',' 
+        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ','
         {
             encryptedText[i] = text[i] ^ key;
         }
@@ -42,14 +42,14 @@ string encryptXOR(const string& text, char key)
     return encryptedText;
 }
 
-// Функция для дешифрования текста методом XOR 
+// Функция для дешифрования текста методом XOR
 string decryptXOR(const string& encryptedText, char key)
 {
     string decryptedText = encryptedText;
 
     for (int i = 0; i < decryptedText.length(); i++)
     {
-        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ',' 
+        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ','
         {
             decryptedText[i] = encryptedText[i] ^ key;
         }
@@ -58,14 +58,14 @@ string decryptXOR(const string& encryptedText, char key)
     return decryptedText;
 }
 
-// Функция для шифрования текста методом сдвига ASCII-кодов 
+// Функция для шифрования текста методом сдвига ASCII-кодов
 string encryptShift(const string& text, int shift)
 {
     string encryptedText = text;
 
     for (int i = 0; i < encryptedText.length(); i++)
     {
-        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ',' 
+        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ','
         {
             encryptedText[i] = (text[i] + shift) % 256;
         }
@@ -74,14 +74,14 @@ string encryptShift(const string& text, int shift)
     return encryptedText;
 }
 
-// Функция для дешифрования текста методом сдвига ASCII-кодов 
+// Функция для дешифрования текста методом сдвига ASCII-кодов
 string decryptShift(const string& encryptedText, int shift)
 {
     string decryptedText = encryptedText;
 
     for (int i = 0; i < decryptedText.length(); i++)
     {
-        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ',' 
+        if (encryptedText[i] != 'l' && encryptedText[i] != 'L' && encryptedText[i] != ',') // Исключаем символы 'l', 'L' и ','
         {
             decryptedText[i] = (encryptedText[i] - shift + 256) % 256;
         }
@@ -89,24 +89,47 @@ string decryptShift(const string& encryptedText, int shift)
 
     return decryptedText;
 }
-// Функция для добавления новых данных в файл 
+// Функция для добавления новых данных в файл
 void addData()
 {
     string login;
     string password;
     string serviceName;
-
-    cin.ignore(); // Очистка буфера ввода 
+    cin.ignore(); // Очистка буфера ввода
 
     cout << "Введите логин: ";
     getline(cin, login);
 
-    cout << "Введите пароль или нажмите Enter для генерации: ";
+    cout << "Введите пароль или оставьте поле пустым для случайной генерации: ";
     getline(cin, password);
 
     if (password.empty())
     {
-        password = generatePassword(10); // Генерация пароля длиной 10 символов 
+        cout << "Введите длину пароля (по умолчанию 10): ";
+        string passwordLengthInput;
+        getline(cin, passwordLengthInput);
+
+        int passwordLength = 10; // Значение по умолчанию
+
+        if (!passwordLengthInput.empty())
+        {
+            try
+            {
+                passwordLength = stoi(passwordLengthInput);
+            }
+            catch (const std::exception& e)
+            {
+                cout << "Некорректное значение длины пароля. Используется значение по умолчанию (10)." << endl;
+            }
+        }
+
+        if (passwordLength <= 0)
+        {
+            cout << "Некорректное значение длины пароля. Используется значение по умолчанию (10)." << endl;
+            passwordLength = 10;
+        }
+
+        password = generatePassword(passwordLength);
         cout << "Сгенерированный пароль: " << password << endl;
     }
 
@@ -117,7 +140,7 @@ void addData()
 
     if (file.is_open())
     {
-        char key = 'k'; // Ключ для XOR-шифрования 
+        char key = 'k'; // Ключ для XOR-шифрования
 
         string encryptedLogin = encryptShift(encryptXOR(login, key), KEY_SHIFT);
         string encryptedPassword = encryptShift(encryptXOR(password, key), KEY_SHIFT);
@@ -134,26 +157,24 @@ void addData()
         cout << "Ошибка при открытии файла." << endl;
     }
 }
-
 void viewData()
 {
     ifstream file(FILE_NAME);
 
     if (file.is_open())
     {
-        char key = 'k'; // Ключ для XOR-шифрования 
+        char key = 'k'; // Ключ для XOR-шифрования
 
         string line;
         int lineNumber = 1;
 
         cout << "Доступные сервисы:" << endl;
         string decryptedServiceName;
-        bool isEmpty = true; // Флаг, указывающий на пустой файл 
+        bool isEmpty = true; // Флаг, указывающий на пустой файл
 
-        while
-            (getline(file, line))
+        while (getline(file, line))
         {
-            isEmpty = false; // Файл не является пустым 
+            isEmpty = false; // Файл не является пустым
 
             string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
@@ -174,7 +195,7 @@ void viewData()
 
         if (isEmpty) {
             cout << "Файл пустой." << endl;
-            return; // Программа завершает выполнение 
+            return; // Программа завершает выполнение
         }
 
         int selectedLine;
@@ -183,7 +204,7 @@ void viewData()
         std::cin >> selectedLine;
 
         lineNumber = 1;
-        file.open(FILE_NAME); // Переоткрываем файл для поиска выбранной строки 
+        file.open(FILE_NAME); // Переоткрываем файл для поиска выбранной строки
 
         if (file.is_open())
         {
@@ -228,12 +249,12 @@ void editData()
     ofstream tempFile("temp.txt");
     if (file.is_open() && tempFile.is_open())
     {
-        char key = 'k'; // Ключ для XOR-шифрования 
+        char key = 'k'; // Ключ для XOR-шифрования
 
         string line;
         int lineNumber = 1;
         int selectedLine;
-        bool lineEdited = false; // Флаг для отслеживания редактирования строки 
+        bool lineEdited = false; // Флаг для отслеживания редактирования строки
 
         cout << "Доступные сервисы:" << endl;
 
@@ -254,11 +275,11 @@ void editData()
         }
 
         file.close();
-        file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала 
+        file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала
 
         if (lineNumber == 1) {
             cout << "Файл пустой. Нет данных для редактирования." << endl;
-            return; // Программа завершает выполнение 
+            return; // Программа завершает выполнение
         }
 
         cout << "Введите номер сервиса, который необходимо отредактировать: ";
@@ -270,10 +291,9 @@ void editData()
         {
             if (currentLine == selectedLine)
             {
-                lineEdited = true; // Устанавливаем флаг редактирования строки 
+                lineEdited = true; // Устанавливаем флаг редактирования строки
 
-                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT
-                ), key);
+                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
                 size_t commaPos1 = decryptedLine.find(",");
                 size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
@@ -337,7 +357,7 @@ void editData()
 
         remove(FILE_NAME.c_str());
 
-        // Переименовываем временный файл в оригинальное имя файла, только если строка была отредактирована 
+        // Переименовываем временный файл в оригинальное имя файла, только если строка была отредактирована
         if (lineEdited)
         {
             rename("temp.txt", FILE_NAME.c_str());
@@ -354,14 +374,14 @@ void editData()
 }
 
 
-// Функция для удаления данных из файла 
+// Функция для удаления данных из файла
 void deleteData()
 {
     ifstream file(FILE_NAME);
     ofstream tempFile("temp.txt");
     if (file.is_open() && tempFile.is_open())
     {
-        char key = 'k'; // Ключ для XOR-шифрования 
+        char key = 'k'; // Ключ для XOR-шифрования
 
         string line;
         int lineNumber = 1;
@@ -386,12 +406,13 @@ void deleteData()
         }
 
         file.close();
-        file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала 
+        file.open(FILE_NAME); // Переоткрываем файл для считывания данных с начала
 
         if (lineNumber == 1) {
             cout << "Файл пустой. Нет данных для удаления." << endl;
-            return; // Программа завершает выполнение 
+            return; // Программа завершает выполнение
         }
+
         cout << "Введите номер сервиса, который необходимо удалить: ";
         cin >> selectedLine;
 
@@ -421,7 +442,7 @@ void deleteData()
     }
 }
 
-// Функция для шифрования файла 
+// Функция для шифрования файла
 void encryptFile()
 {
     ifstream inputFile(FILE_NAME);
@@ -429,8 +450,8 @@ void encryptFile()
 
     if (inputFile.is_open() && encryptedFile.is_open())
     {
-        char key1 = 'k'; // Ключ для первого XOR-шифрования 
-        char key2 = 's'; // Ключ для второго XOR-шифрования 
+        char key1 = 'k'; // Ключ для первого XOR-шифрования
+        char key2 = 's'; // Ключ для второго XOR-шифрования
 
         string line;
 
@@ -455,7 +476,7 @@ void encryptFile()
     }
 }
 
-// Функция для дешифрования файла 
+// Функция для дешифрования файла
 void decryptFile()
 {
     ifstream encryptedFile("encrypted.txt");
@@ -463,8 +484,8 @@ void decryptFile()
 
     if (encryptedFile.is_open() && decryptedFile.is_open())
     {
-        char key1 = 'k'; // Ключ для первого XOR-шифрования 
-        char key2 = 's'; // Ключ для второго XOR-шифрования 
+        char key1 = 'k'; // Ключ для первого XOR-шифрования
+        char key2 = 's'; // Ключ для второго XOR-шифрования
 
         string line;
 
@@ -530,4 +551,3 @@ int main()
 
     return 0;
 }
-
