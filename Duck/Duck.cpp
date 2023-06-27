@@ -4,12 +4,13 @@
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
+#include <vector>
+#include <filesystem>
 
 using namespace std;
 
 const string FILE_NAME = "passwords.txt";
 const int KEY_SHIFT = 3;
-
 // Функция для генерации случайного пароля
 string generatePassword(int length)
 {
@@ -510,11 +511,67 @@ void decryptFile()
     }
 }
 
-int main()
-{
-    setlocale(LC_ALL, "RU");
-    int choice;
+std::vector<std::string> createdFiles;
 
+void viewCreatedFiles()
+{
+    if (createdFiles.empty())
+    {
+        std::cout << "Нет созданных файлов." << std::endl;
+    }
+    else
+    {
+        std::cout << "Созданные файлы:" << std::endl;
+        for (size_t i = 0; i < createdFiles.size(); i++)
+        {
+            std::cout << i + 1 << ". " << createdFiles[i] << std::endl;
+        }
+    }
+}
+
+bool isPasswordCorrect(const std::string& fileName, const std::string& password)
+{
+    std::ifstream file(fileName);
+    if (file.is_open())
+    {
+        std::string storedPassword;
+        getline(file, storedPassword);
+
+        file.close();
+
+        // Сравнение введенного пароля с хранимым паролем
+        if (password == storedPassword)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void createEncryptedFile(const std::string& fileName, const std::string& password)
+{
+    std::ofstream file(fileName + ".txt");  // Открытие файла в текстовом режиме
+
+    if (file.is_open())
+    {
+        // Записываем пароль в файл
+        file << password;
+
+        file.close();
+        std::cout << "Файл " << fileName << ".txt" << " успешно создан и зашифрован паролем." << std::endl;
+
+        // Добавляем имя файла в вектор созданных файлов
+        createdFiles.push_back(fileName + ".txt");
+    }
+    else
+    {
+        std::cout << "Ошибка при создании файла " << fileName << ".txt" << "." << std::endl;
+    }
+}
+void secondaryMenu()
+{
+    int choice;
     do
     {
         cout << "Выберите действие:" << endl;
@@ -530,24 +587,143 @@ int main()
         {
         case 1:
             addData();
+            // Добавить логику для ввода новых данных
             break;
         case 2:
-            viewData();
+            viewData();// Добавить логику для просмотра данных
             break;
         case 3:
-            editData();
+            editData();// Добавить логику для редактирования данных
             break;
         case 4:
-            deleteData();
+            deleteData();// Добавить логику для удаления данных
             break;
         case 5:
-            cout << "Завершение работы программы." << endl;
+            std::cout << "Завершение работы программы." << std::endl;
             break;
         default:
-            cout << "Неверный выбор. Попробуйте еще раз." << endl;
+            std::cout << "Неверный выбор. Попробуйте еще раз." << std::endl;
             break;
         }
     } while (choice != 5);
+}
+void openEncryptedFile(const std::string& fileName, const std::string& password)
+{
+    std::ifstream file(fileName);  // Открытие файла в текстовом режиме
+
+    if (file.is_open())
+    {
+        std::string storedPassword;
+        std::getline(file, storedPassword);
+
+        if (storedPassword == password)
+        {
+            std::cout << "Файл " << fileName << " успешно открыт." << std::endl;
+
+            
+
+            secondaryMenu(); // Вызов вторичного меню
+        }
+        else
+        {
+            std::cout << "Неверный пароль для файла " << fileName << "." << std::endl;
+        }
+
+        file.close();
+    }
+    else
+    {
+        std::cout << "Ошибка при открытии файла " << fileName << "." << std::endl;
+    }
+}
+
+
+void viewCreatedFilesAndOpen()
+{
+    viewCreatedFiles();
+
+    if (createdFiles.empty())
+    {
+        std::cout << "Нет созданных файлов." << std::endl;
+        return;
+    }
+
+    std::cout << "Введите номер файла для открытия: ";
+    int fileNumber;
+    std::cin >> fileNumber;
+
+    if (fileNumber >= 1 && fileNumber <= createdFiles.size())
+    {
+        std::string fileName = createdFiles[fileNumber - 1];
+
+        std::string password;
+        std::cout << "Введите пароль для файла " << fileName << ": ";
+        std::cin >> password;
+
+        openEncryptedFile(fileName, password);
+    }
+    else
+    {
+        std::cout << "Неверный номер файла." << std::endl;
+    }
+}
+
+
+
+int main()
+{
+    setlocale(LC_ALL, "RU");
+    int choice1;
+
+    do
+    {
+        std::cout << "Выберите действие:" << std::endl;
+        std::cout << "1. Просмотреть созданные файлы" << std::endl;
+        std::cout << "2. Создать новый файл" << std::endl;
+        std::cout << "3. Открыть файл" << std::endl;
+        std::cout << "4. Выход" << std::endl;
+        std::cout << "Введите номер действия: ";
+        std::cin >> choice1;
+
+        std::string fileName;
+        std::string password;
+
+        switch (choice1)
+        {
+        case 1:
+            viewCreatedFilesAndOpen();
+            break;
+        case 2:
+            viewCreatedFiles();
+            std::cout << "Введите имя файла: ";
+            std::cin.ignore(); // Очистка буфера перед вводом имени файла
+            std::getline(std::cin, fileName);
+
+            std::cout << "Введите пароль: ";
+            std::getline(std::cin, password);
+
+            createEncryptedFile(fileName, password);
+            break;
+        case 3:
+            viewCreatedFilesAndOpen();
+            break;
+        case 4:
+            std::cout << "Завершение работы программы." << std::endl;
+            break;
+        default:
+            std::cout << "Неверный выбор. Попробуйте еще раз." << std::endl;
+            break;
+        }
+
+        // Проверка пароля и запуск второго цикла
+        if (choice1 == 3 && isPasswordCorrect(fileName, password))
+        {
+            secondaryMenu();
+        }
+    } while (choice1 != 4);
 
     return 0;
+
 }
+
+
