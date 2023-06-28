@@ -7,11 +7,8 @@
 #include <vector>
 #include <filesystem>
 
-
 using namespace std;
 
-//const string FILE_NAME = "passwords.txt";
-const int KEY_SHIFT = 3;
 // Функция для генерации случайного пароля
 string generatePassword(int length)
 {
@@ -91,8 +88,49 @@ string decryptShift(const string& encryptedText, int shift)
 
     return decryptedText;
 }
+
+// Экспериментальное шифрование
+string encryptCaesar(const string& message)
+{
+    string encryptedMessage = message;
+
+    for (size_t i = 0; i < message.length(); i++)
+    {
+        char originalChar = message[i];
+
+        // Perform character shift based on the Caesar cipher
+        if (isprint(originalChar) && originalChar != ',')
+        {
+            char shiftedChar = static_cast<char>((originalChar - 32 + 3) % 94 + 32);
+            encryptedMessage[i] = shiftedChar;
+        }
+    }
+
+    return encryptedMessage;
+}
+
+// Экспериментальное дешифрование
+string decryptCaesar(const string& encryptedMessage)
+{
+    string decryptedMessage = encryptedMessage;
+
+    for (size_t i = 0; i < encryptedMessage.length(); i++)
+    {
+        char encryptedChar = encryptedMessage[i];
+
+        // Perform character shift based on the Caesar cipher
+        if (isprint(encryptedChar) && encryptedChar != ',')
+        {
+            char shiftedChar = static_cast<char>((encryptedChar - 32 - 3 + 94) % 94 + 32);
+            decryptedMessage[i] = shiftedChar;
+        }
+    }
+
+    return decryptedMessage;
+}
+
 // Функция для добавления новых данных в файл
-void addData(const string& fileName)
+void addData(const string& fileName, const int& method)
 {
     string login;
     string password;
@@ -144,22 +182,31 @@ void addData(const string& fileName)
     {
         char key = 'k'; // Ключ для XOR-шифрования
 
-        // Check if the file is empty before writing the data
         file.seekp(0, ios::end);
         if (file.tellp() != 0)
         {
-            file << endl; // Add a newline before writing the data
+            file << endl;
         }
+        if (method == 1) {
+            string encryptedLogin = encryptShift(encryptXOR(login, key), KEY_SHIFT);
+            string encryptedPassword = encryptShift(encryptXOR(password, key), KEY_SHIFT);
+            string encryptedServiceName = encryptShift(encryptXOR(serviceName, key), KEY_SHIFT);
 
-        string encryptedLogin = encryptShift(encryptXOR(login, key), KEY_SHIFT);
-        string encryptedPassword = encryptShift(encryptXOR(password, key), KEY_SHIFT);
-        string encryptedServiceName = encryptShift(encryptXOR(serviceName, key), KEY_SHIFT);
+            file << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName;
 
-        file << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName;
+            file.close();
+            cout << "Данные успешно добавлены." << endl;
+        }
+        if (method == 2) {
+            string encryptedLogin = encryptCaesar(login);
+            string encryptedPassword = encryptCaesar(password);
+            string encryptedServiceName = encryptCaesar(serviceName);
 
-        file.close();
+            file << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName;
 
-        cout << "Данные успешно добавлены." << endl;
+            file.close();
+            cout << "Данные успешно добавлены." << endl;
+        }
     }
     else
     {
@@ -167,7 +214,7 @@ void addData(const string& fileName)
     }
 }
 
-void viewData(const string& fileName)
+void viewData(const string& fileName, const int& method)
 {
     ifstream file(fileName);
 
@@ -176,7 +223,7 @@ void viewData(const string& fileName)
         char key = 'k'; // Ключ для XOR-шифрования
 
         string line;
-        int lineNumber = 1; // Start with zero to ignore the first line
+        int lineNumber = 1;
 
         cout << "Доступные сервисы:" << endl;
         string decryptedServiceName;
@@ -184,21 +231,34 @@ void viewData(const string& fileName)
 
         while (getline(file, line))
         {
-            if (lineNumber > 1) // Ignore the first line
+            if (lineNumber > 1)
             {
                 isEmpty = false; // Файл не является пустым
+                if (method == 1) {
+                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
-
-                size_t commaPos1 = decryptedLine.find(",");
-                size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
-
-                string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
-                size_t serviceNameEnd = decryptedServiceName.find(",");
-                if (serviceNameEnd != string::npos) {
-                    decryptedServiceName = decryptedServiceName.substr(0, serviceNameEnd);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                    size_t serviceNameEnd = decryptedServiceName.find(",");
+                    if (serviceNameEnd != string::npos) {
+                        decryptedServiceName = decryptedServiceName.substr(0, serviceNameEnd);
+                    }
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl;
                 }
-                cout << lineNumber - 1 << ". " << decryptedServiceName << endl;
+                else if (method == 2) {
+                    string decryptedLine = decryptCaesar(line);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                    size_t serviceNameEnd = decryptedServiceName.find(",");
+                    if (serviceNameEnd != string::npos) {
+                        decryptedServiceName = decryptedServiceName.substr(0, serviceNameEnd);
+                    }
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl;
+                }
+
             }
 
             lineNumber++;
@@ -225,19 +285,36 @@ void viewData(const string& fileName)
             {
                 if (lineNumber == selectedLine)
                 {
-                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                    if (method == 1) {
+                        string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                        size_t commaPos1 = decryptedLine.find(",");
+                        size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                    size_t commaPos1 = decryptedLine.find(",");
-                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+                        string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                        string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                        string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                        cout << "Логин: " << decryptedLogin << endl;
+                        cout << "Пароль: " << decryptedPassword << endl;
+                        cout << "Сервис: " << decryptedServiceName << endl;
 
-                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
-                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
-                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
-                    cout << "Логин: " << decryptedLogin << endl;
-                    cout << "Пароль: " << decryptedPassword << endl;
-                    cout << "Сервис: " << decryptedServiceName << endl;
+                        break;
+                    }
+                    else if (method == 2) {
+                        string decryptedLine = decryptCaesar(line);
+                        size_t commaPos1 = decryptedLine.find(",");
+                        size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                    break;
+                        string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                        string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                        string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                        cout << "Логин: " << decryptedLogin << endl;
+                        cout << "Пароль: " << decryptedPassword << endl;
+                        cout << "Сервис: " << decryptedServiceName << endl;
+
+                        break;
+                    }
+
+                    
                 }
 
                 lineNumber++;
@@ -255,7 +332,7 @@ void viewData(const string& fileName)
         cout << "Ошибка при открытии файла." << endl;
     }
 }
-void editData(const string& fileName)
+void editData(const string& fileName, const int& method)
 {
     ifstream file(fileName);
     ofstream tempFile("temp.txt");
@@ -272,20 +349,35 @@ void editData(const string& fileName)
 
         while (getline(file, line))
         {
-            if (lineNumber > 1) // Ignore the first line
+            if (lineNumber > 1)
             {
-                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                if (method == 1) {
+                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                size_t commaPos1 = decryptedLine.find(",");
-                size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
 
-                string decryptedLogin = decryptedLine.substr(0, commaPos1);
-                string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
-                string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl; 
 
-                cout << lineNumber - 1 << ". " << decryptedServiceName << endl; // Adjust the line number for display
+                    lineNumber++;
+                }
+                if (method == 2) {
+                    string decryptedLine = decryptCaesar(line);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                lineNumber++;
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl; 
+
+                    lineNumber++;
+                }
+
             }
             else
             {
@@ -308,60 +400,136 @@ void editData(const string& fileName)
 
         while (getline(file, line))
         {
-            if (currentLine == selectedLine + 1) // Adjust the line number for editing
+            if (currentLine == selectedLine + 1) 
             {
                 lineEdited = true; // Устанавливаем флаг редактирования строки
+                if (method == 1) {
+                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
-                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                size_t commaPos1 = decryptedLine.find(",");
-                size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
 
-                string decryptedLogin = decryptedLine.substr(0, commaPos1);
-                string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
-                string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                    string editedLogin;
+                    string editedPassword;
+                    string editedServiceName;
 
-                string editedLogin;
-                string editedPassword;
-                string editedServiceName;
+                    cout << "Текущие данные:" << endl;
+                    cout << "Логин: " << decryptedLogin << endl;
+                    cout << "Пароль: " << decryptedPassword << endl;
+                    cout << "Сервис: " << decryptedServiceName << endl;
 
-                cout << "Текущие данные:" << endl;
-                cout << "Логин: " << decryptedLogin << endl;
-                cout << "Пароль: " << decryptedPassword << endl;
-                cout << "Сервис: " << decryptedServiceName << endl;
+                    cout << "Введите новый логин (оставьте пустым, чтобы оставить текущее значение): ";
+                    cin.ignore();
+                    getline(cin, editedLogin);
 
-                cout << "Введите новый логин (оставьте пустым, чтобы оставить текущее значение): ";
-                cin.ignore();
-                getline(cin, editedLogin);
+                    cout << "Введите новый пароль (оставьте пустым, чтобы сгенерировать новый): ";
+                    getline(cin, editedPassword);
 
-                cout << "Введите новый пароль (оставьте пустым, чтобы сгенерировать новый): ";
-                getline(cin, editedPassword);
+                    cout << "Введите новое название сервиса (оставьте пустым, чтобы оставить текущее значение): ";
+                    getline(cin, editedServiceName);
 
-                cout << "Введите новое название сервиса (оставьте пустым, чтобы оставить текущее значение): ";
-                getline(cin, editedServiceName);
+                    if (editedLogin.empty())
+                    {
+                        editedLogin = decryptedLogin;
+                    }
 
-                if (editedLogin.empty())
-                {
-                    editedLogin = decryptedLogin;
+                    if (editedPassword.empty())
+                    {
+                        editedPassword = generatePassword(10);
+                    }
+
+                    if (editedServiceName.empty())
+                    {
+                        editedServiceName = decryptedServiceName;
+                    }
+                    if (method == 1) {
+                        string encryptedLogin = encryptShift(encryptXOR(editedLogin, key), KEY_SHIFT);
+                        string encryptedPassword = encryptShift(encryptXOR(editedPassword, key), KEY_SHIFT);
+                        string encryptedServiceName = encryptShift(encryptXOR(editedServiceName, key), KEY_SHIFT);
+
+                        tempFile << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName << endl;
+
+                        cout << "Данные успешно отредактированы." << endl;
+                    }
+                    if (method == 2) {
+                        string encryptedLogin = encryptCaesar(editedLogin);
+                        string encryptedPassword = encryptCaesar(editedPassword);
+                        string encryptedServiceName = encryptCaesar(editedServiceName);
+
+                        tempFile << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName << endl;
+
+                        cout << "Данные успешно отредактированы." << endl;
+                    }
+
+                }
+                if (method == 2) {
+                    string decryptedLine = encryptCaesar(line);
+
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+
+                    string editedLogin;
+                    string editedPassword;
+                    string editedServiceName;
+
+                    cout << "Текущие данные:" << endl;
+                    cout << "Логин: " << decryptedLogin << endl;
+                    cout << "Пароль: " << decryptedPassword << endl;
+                    cout << "Сервис: " << decryptedServiceName << endl;
+
+                    cout << "Введите новый логин (оставьте пустым, чтобы оставить текущее значение): ";
+                    cin.ignore();
+                    getline(cin, editedLogin);
+
+                    cout << "Введите новый пароль (оставьте пустым, чтобы сгенерировать новый): ";
+                    getline(cin, editedPassword);
+
+                    cout << "Введите новое название сервиса (оставьте пустым, чтобы оставить текущее значение): ";
+                    getline(cin, editedServiceName);
+
+                    if (editedLogin.empty())
+                    {
+                        editedLogin = decryptedLogin;
+                    }
+
+                    if (editedPassword.empty())
+                    {
+                        editedPassword = generatePassword(10);
+                    }
+
+                    if (editedServiceName.empty())
+                    {
+                        editedServiceName = decryptedServiceName;
+                    }
+                    if (method == 1) {
+                        string encryptedLogin = encryptShift(encryptXOR(editedLogin, key), KEY_SHIFT);
+                        string encryptedPassword = encryptShift(encryptXOR(editedPassword, key), KEY_SHIFT);
+                        string encryptedServiceName = encryptShift(encryptXOR(editedServiceName, key), KEY_SHIFT);
+
+                        tempFile << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName << endl;
+
+                        cout << "Данные успешно отредактированы." << endl;
+                    }
+                    if (method == 2) {
+                        string encryptedLogin = encryptCaesar(editedLogin);
+                        string encryptedPassword = encryptCaesar(editedPassword);
+                        string encryptedServiceName = encryptCaesar(editedServiceName);
+
+                        tempFile << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName << endl;
+
+                        cout << "Данные успешно отредактированы." << endl;
+                    }
+
                 }
 
-                if (editedPassword.empty())
-                {
-                    editedPassword = generatePassword(10);
-                }
-
-                if (editedServiceName.empty())
-                {
-                    editedServiceName = decryptedServiceName;
-                }
-
-                string encryptedLogin = encryptShift(encryptXOR(editedLogin, key), KEY_SHIFT);
-                string encryptedPassword = encryptShift(encryptXOR(editedPassword, key), KEY_SHIFT);
-                string encryptedServiceName = encryptShift(encryptXOR(editedServiceName, key), KEY_SHIFT);
-
-                tempFile << encryptedLogin << "," << encryptedPassword << "," << encryptedServiceName << endl;
-
-                cout << "Данные успешно отредактированы." << endl;
             }
             else
             {
@@ -393,7 +561,7 @@ void editData(const string& fileName)
 }
 
 
-void deleteData(const string& fileName)
+void deleteData(const string& fileName, const int& method)
 {
     ifstream file(fileName);
     ofstream tempFile("temp.txt");
@@ -409,20 +577,37 @@ void deleteData(const string& fileName)
 
         while (getline(file, line))
         {
-            if (lineNumber > 1) // Ignore the first line
+            if (lineNumber > 1) 
             {
-                string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
+                if (method == 1) {
+                    string decryptedLine = decryptXOR(decryptShift(line, KEY_SHIFT), key);
 
-                size_t commaPos1 = decryptedLine.find(",");
-                size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
 
-                string decryptedLogin = decryptedLine.substr(0, commaPos1);
-                string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
-                string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
 
-                cout << lineNumber - 1 << ". " << decryptedServiceName << endl; // Adjust the line number for display
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl; 
 
-                lineNumber++;
+                    lineNumber++;
+                }
+                if (method == 2) {
+                    string decryptedLine = decryptCaesar(line);
+
+                    size_t commaPos1 = decryptedLine.find(",");
+                    size_t commaPos2 = decryptedLine.find(",", commaPos1 + 1);
+
+                    string decryptedLogin = decryptedLine.substr(0, commaPos1);
+                    string decryptedPassword = decryptedLine.substr(commaPos1 + 1, commaPos2 - commaPos1 - 1);
+                    string decryptedServiceName = decryptedLine.substr(commaPos2 + 1);
+
+                    cout << lineNumber - 1 << ". " << decryptedServiceName << endl; 
+
+                    lineNumber++;
+                }
+
             }
             else
             {
@@ -467,75 +652,6 @@ void deleteData(const string& fileName)
     }
 }
 
-
-// Функция для шифрования файла
-//void encryptFile(const string& fileName)
-//{
-//    ifstream inputFile(fileName);
-//    ofstream encryptedFile("encrypted.txt");
-//
-//    if (inputFile.is_open() && encryptedFile.is_open())
-//    {
-//        char key1 = 'k'; // Ключ для первого XOR-шифрования
-//        char key2 = 's'; // Ключ для второго XOR-шифрования
-//
-//        string line;
-//
-//        while (getline(inputFile, line))
-//        {
-//            string encryptedLine = encryptXOR(encryptShift(line, KEY_SHIFT), key1);
-//            encryptedLine = encryptXOR(encryptedLine, key2);
-//
-//            encryptedFile << encryptedLine << endl;
-//        }
-//
-//        inputFile.close();
-//        encryptedFile.close();
-//
-//        remove(fileName.c_str());
-//
-//        cout << "Файл успешно зашифрован." << endl;
-//    }
-//    else
-//    {
-//        cout << "Ошибка при открытии файла." << endl;
-//    }
-//}
-
-// Функция для дешифрования файла
-void decryptFile()
-{
-    ifstream encryptedFile("encrypted.txt");
-    ofstream decryptedFile("decrypted.txt");
-
-    if (encryptedFile.is_open() && decryptedFile.is_open())
-    {
-        char key1 = 'k'; // Ключ для первого XOR-шифрования
-        char key2 = 's'; // Ключ для второго XOR-шифрования
-
-        string line;
-
-        while (getline(encryptedFile, line))
-        {
-            string decryptedLine = decryptXOR(decryptXOR(line, key2), key1);
-            decryptedLine = decryptShift(decryptedLine, KEY_SHIFT);
-
-            decryptedFile << decryptedLine << endl;
-        }
-
-        encryptedFile.close();
-        decryptedFile.close();
-
-        remove("encrypted.txt");
-
-        cout << "Файл успешно дешифрован." << endl;
-    }
-    else
-    {
-        cout << "Ошибка при открытии файла." << endl;
-    }
-}
-
 vector<string> createdFiles;
 
 void viewCreatedFiles()
@@ -554,20 +670,31 @@ void viewCreatedFiles()
     }
 }
 
-string encryptPassword(const string& password, char key)
+string encryptPassword(const string& password, char key, const int& method)
 {
-    string encryptedPassword = encryptShift(encryptXOR(password, key), KEY_SHIFT); // Применение комбинированного шифрования
-    return encryptedPassword;
+    if (method == 1) {
+        string encryptedPassword = encryptShift(encryptXOR(password, key), KEY_SHIFT); // Применение комбинированного шифрования
+        return encryptedPassword;
+    }
+    if (method == 2) {
+        string decryptedPassword = encryptCaesar(password);
+        return decryptedPassword;
+    }
 }
-string decryptPassword(const string& encryptedPassword, char key)
+
+string decryptPassword(const string& encryptedPassword, char key, const int& method)
 {
-    string decryptedPassword = decryptXOR(decryptShift(encryptedPassword, KEY_SHIFT), key); // Применение комбинированного дешифрования
-    return decryptedPassword;
+    if (method == 1) {
+        string decryptedPassword = decryptXOR(decryptShift(encryptedPassword, KEY_SHIFT), key); // Применение комбинированного дешифрования
+        return decryptedPassword;
+    }
+    if (method == 2) {
+        string decryptedPassword = decryptCaesar(encryptedPassword);
+        return decryptedPassword;
+    }
 }
 
-
-
-bool isPasswordCorrect(const string& fileName, const string& password)
+bool isPasswordCorrect(const string& fileName, const string& password, const int& method)
 {
     char key = 'k';
     ifstream file(fileName);
@@ -579,10 +706,10 @@ bool isPasswordCorrect(const string& fileName, const string& password)
         file.close();
 
         // Расшифровка хранимого пароля перед сравнением
-        string decryptedPassword = decryptPassword(storedPassword, key);
+        string decryptedPassword = decryptPassword(storedPassword, key, method);
 
         // Сравнение введенного пароля с расшифрованным хранимым паролем
-        if (password == decryptPassword(decryptedPassword, key))
+        if (password == decryptPassword(decryptedPassword, key, method))
         {
             return true;
         }
@@ -610,22 +737,33 @@ void saveCreatedFiles()
     }
 }
 
-void createEncryptedFile(const string& fileName, const string& password)
+void createEncryptedFile(const string& fileName, const string& password, const int& method)
 {
     char key = 'k';
     ofstream file(fileName + ".txt");  // Открытие файла в текстовом режиме
 
     if (file.is_open())
     {
-        // Шифрование пароля перед записью в файл
-        string encryptedPassword = encryptPassword(password, key);
+        if (method == 1) {
+            // Шифрование пароля перед записью в файл
+            string encryptedPassword = encryptPassword(password, key, method);
 
-        // Записываем зашифрованный пароль в файл
-        file << encryptedPassword;
+            // Записываем зашифрованный пароль в файл
+            file << encryptedPassword;
 
-        file.close();
-        cout << "Файл " << fileName << ".txt" << " успешно создан и зашифрован паролем." << endl;
+            file.close();
+            cout << "Файл " << fileName << ".txt" << " успешно создан и зашифрован паролем." << endl;
+        }
+        if (method == 2) {
+            // Шифрование пароля перед записью в файл
+            string encryptedPassword = encryptPassword(password, key, method);
 
+            // Записываем зашифрованный пароль в файл
+            file << encryptedPassword;
+
+            file.close();
+            cout << "Файл " << fileName << ".txt" << " успешно создан и зашифрован паролем." << endl;
+        }
         // Добавляем имя файла в вектор созданных файлов
         createdFiles.push_back(fileName + ".txt");
         saveCreatedFiles();
@@ -635,7 +773,8 @@ void createEncryptedFile(const string& fileName, const string& password)
         cout << "Ошибка при создании файла " << fileName << ".txt" << "." << endl;
     }
 }
-void secondaryMenu(string fileName)
+
+void secondaryMenu(string fileName, const int& method)
 {
     int choice;
     do
@@ -652,16 +791,16 @@ void secondaryMenu(string fileName)
         switch (choice)
         {
         case 1:
-            addData(fileName);
+            addData(fileName, method);
             break;
         case 2:
-            viewData(fileName);
+            viewData(fileName, method);
             break;
         case 3:
-            editData(fileName);
+            editData(fileName, method);
             break;
         case 4:
-            deleteData(fileName);
+            deleteData(fileName, method);
             break;
         case 5:
             cout << "Завершение работы с файлом." << endl;
@@ -673,7 +812,7 @@ void secondaryMenu(string fileName)
     } while (choice != 5);
 }
 
-void openEncryptedFile(const string& fileName, const string& password)
+void openEncryptedFile(const string& fileName, const string& password, const int& method)
 {
     char key = 'k';
     ifstream file(fileName);  // Добавляем расширение .txt к имени файла
@@ -684,19 +823,14 @@ void openEncryptedFile(const string& fileName, const string& password)
         getline(file, storedPassword);
 
         // Расшифровываем хранимый пароль перед сравнением
-        string decryptedPassword = decryptPassword(storedPassword, key);
-
-        if (password == decryptedPassword)
-        {
-            cout << "Файл " << fileName << " успешно открыт." << endl;
-
-            secondaryMenu(fileName); // Передаем имя файла в secondaryMenu
+        string decryptedPassword = decryptPassword(storedPassword, key, method);
+        if (password == decryptedPassword){
+                cout << "Файл " << fileName << " успешно открыт." << endl;
+                secondaryMenu(fileName, method); // Передаем имя файла в secondaryMenu
         }
-        else
-        {
-            cout << "Неверный пароль для файла " << fileName << "." << endl;
+        else{
+                cout << "Неверный пароль для файла " << fileName << "." << endl;
         }
-
         file.close();
     }
     else
@@ -726,8 +860,14 @@ void viewCreatedFilesAndOpen()
         string password;
         cout << "Введите пароль для файла " << fileName << ": ";
         cin >> password;
-
-        openEncryptedFile(fileName, password);
+        int method = 0;
+        do {
+            cout << "Выберите метод расшифровки:" << endl;
+            cout << "1. Библиотечный" << endl;
+            cout << "2. Экспериментальный" << endl;
+            cin >> method;
+        } while (method != 1 && method != 2);
+        openEncryptedFile(fileName, password, method);
     }
     else
     {
@@ -773,6 +913,7 @@ void deleteFile(const string& fileName) {
         cout << "Ошибка при удалении файла " << fileName << "." << endl;
     }
 }
+
 void FdeleteData() {
     viewCreatedFiles();
     if (createdFiles.empty()) {
@@ -788,10 +929,12 @@ void FdeleteData() {
         cout << "Неверный номер файла." << endl;
     }
 }
+
 int main() {
     setlocale(LC_ALL, "RU");
     loadCreatedFiles();
     int choice1;
+    int method = 0;
     do {
         cout << "Выберите действие:" << endl;
         cout << "1. Просмотреть созданные файлы" << endl;
@@ -805,7 +948,7 @@ int main() {
         string password;
         switch (choice1) {
         case 1:
-            viewCreatedFilesAndOpen();
+            viewCreatedFiles();
             break;
         case 2:
             viewCreatedFiles();
@@ -814,7 +957,13 @@ int main() {
             getline(cin, fileName);
             cout << "Введите пароль: ";
             getline(cin, password);
-            createEncryptedFile(fileName, password);
+            do {
+                cout << "Выберите метод шифрования: " << endl;
+                cout << "1. Библиотечный" << endl;
+                cout << "2. Экспериментальный" << endl;
+                cin >> method;
+            } while (method != 1 && method != 2);
+            createEncryptedFile(fileName, password, method);
             break;
         case 3:
             viewCreatedFilesAndOpen();
@@ -822,16 +971,17 @@ int main() {
         case 4:
             FdeleteData();
             break;
-        case 5:            cout << "Завершение работы программы." << endl;
-        break;        default:
-            cout << "Неверный выбор. Попробуйте еще раз." << endl;            break;
+        case 5: 
+            cout << "Завершение работы программы." << endl;
+            break;        
+        default:
+            cout << "Неверный выбор. Попробуйте еще раз." << endl;            
+            break;
         }
-        // Проверка пароля и запуск второго цикла        if (choice1 == 3 && isPasswordCorrect(fileName, password))
+        // Проверка пароля и запуск второго цикла 
         {
-            secondaryMenu(fileName);
+            secondaryMenu(fileName, method);
         }
     } while (choice1 != 5);
     return 0;
 }
-message.txt
-29 кб
